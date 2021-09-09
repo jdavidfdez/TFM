@@ -21,10 +21,79 @@ library(caTools)
 library(mclust)
 library(MASS)
 
+# Sustituir nombres de autores por sus abreviaturas
+abrevia<-function(nom)
+{
+  df.nom<-data.frame("NOMBRE"=c("AaronPressman","AlanCrosby","AlexanderSmith","BenjaminKangLim","BernardHickey",
+                                "BradDorfman","DarrenSchuettler","DavidLawder","EdnaFernandes","EricAuchard"),
+                     "ABREVIATURA"=c("AP","AC","AS","BKL","BH","BD","DS","DL","EF","EA"))
+  return(df.nom[which(df.nom$NOMBRE==nom),]$ABREVIATURA)
+}
+
 # Carga del conjunto de datos objeto de estudio. 
 carga_datos.t.100<-function() # carga de conjunto de datos reducido
 {
+  # mis_autores<-c("AlexanderSmith","BenjaminKangLim","BradDorfman","DavidLawder")
+  # mis_autores.2<-c("AaronPressman","AlanCrosby","BernardHickey","DarrenSchuettler","EdnaFernandes","EricAuchard")
+  mis_autores<-c("AaronPressman","AlanCrosby","AlexanderSmith","BenjaminKangLim","BernardHickey",
+                 "BradDorfman","DarrenSchuettler","DavidLawder","EdnaFernandes","EricAuchard")
+  dir_datos<-c("R/C50/C50train","R/C50/C50test")
+  # cuantos<-ifelse(tr,40,10)
+  cuantos<-50
+  vacio<-TRUE
+  for(dir in dir_datos)
+  {
+    num<-0
+    ld <- list.dirs(dir, recursive = FALSE)
+    for (i in ld) 
+    {
+      # if (num<n.aut)
+      # {
+      num2<-0
+      clase<-strsplit(i,'/')
+      nombre<-clase[[1]][length(clase[[1]])]
+      if (nombre %in% mis_autores)
+      {
+        num<-num+1
+        lf <- list.files(i)
+        for (j in lf) 
+        {
+          nom.fichero<-substr(j,0,nchar(j)-4)
+          if(nombre!=nom.fichero)
+          {
+            num2<-num2+1
+            if(num2<=cuantos)
+            {
+              archivo<-paste(i,"/",j,sep="")
+              con <- file(archivo, open="r") # Abrimos la conexión
+              documento <- readLines(con)
+              close(con)
+              txt<-unsplit(documento," ")
+              nom_abrev<-abrevia(nombre)
+              if (vacio)
+              {
+                datos<-data.frame(ARTICULO=txt,AUTOR=nom_abrev,NUM_AUTOR=num,FICHERO=nom.fichero,stringsAsFactors = F)
+                vacio<-FALSE
+              }
+              else
+                datos<-rbind(datos,data.frame(ARTICULO=txt,AUTOR=nom_abrev,NUM_AUTOR=num,FICHERO=nom.fichero,stringsAsFactors = F))
+            }
+          }
+        }
+      }
+    }
+  }
+  rm(dir_datos,vacio,ld,clase,nombre,nom_abrev,lf,dir,i,j,archivo,con,documento,txt)
+  return(datos)
+}
+
+carga_datos.4.100<-function() # carga de conjunto de datos reducido
+{
   mis_autores<-c("AlexanderSmith","BenjaminKangLim","BradDorfman","DavidLawder")
+  mis_abreviaturas<-c("AS","BKL","BD","DL")
+  # mis_autores.2<-c("AaronPressman","AlanCrosby","BernardHickey","DarrenSchuettler","EdnaFernandes","EricAuchard")
+  # mis_autores<-c("AaronPressman","AlanCrosby","AlexanderSmith","BenjaminKangLim","BernardHickey",
+  #                "BradDorfman","DarrenSchuettler","DavidLawder","EdnaFernandes","EricAuchard")
   dir_datos<-c("R/C50/C50train","R/C50/C50test")
   # cuantos<-ifelse(tr,40,10)
   cuantos<-50
@@ -183,5 +252,5 @@ evalua_x_autor<-function(CONFUSION)
   filas<-rowSums(CONFUSION)
   columnas<-colSums(CONFUSION)
   # return(list(Precis=(TP/(columnas)),Recup=(TP/(filas)),A=(TP/(filas+columnas-(2*TP)))))
-  return(list(Precis=(TP/(columnas)),Recup=(TP/(filas))))
+  return(list(Precis=(TP/(filas)),Recup=(TP/(columnas))))
 }

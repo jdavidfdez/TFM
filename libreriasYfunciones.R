@@ -20,7 +20,9 @@ library(caret)
 library(caTools)
 library(mclust)
 library(MASS)
+library(randomForest)
 
+# install.packages("randomForest")
 # Sustituir nombres de autores por sus abreviaturas
 abrevia<-function(nom)
 {
